@@ -19,7 +19,7 @@ export const PackageSchema = z.object({
   name: z.string(),
   package_type: z.string(),
   owner: GitHubIssueAssigneeSchema.optional(),
-  version_count: z.number(),
+  version_count: z.number().optional(),
   visibility: z.string(),
   url: z.string(),
   created_at: z.string(),
