@@ -192,6 +192,16 @@ export const GetPullRequestReviewsSchema = z.object({
   pull_number: z.number().describe("Pull request number")
 });
 
+export const GetPullRequestDiffSchema = z.object({
+  owner: z.string().describe("Repository owner (username or organization)"),
+  repo: z.string().describe("Repository name"),
+  pull_number: z.number().describe("Pull request number")
+});
+
+export const _GetPullRequestDiffSchema = GetPullRequestDiffSchema.extend({
+  github_pat: z.string().describe("GitHub Personal Access Token"),
+});
+
 // Function implementations
 export async function createPullRequest(
   github_pat: string,
@@ -395,4 +405,24 @@ export async function getPullRequestStatus(
     `https://api.github.com/repos/${owner}/${repo}/commits/${sha}/status`
   );
   return CombinedStatusSchema.parse(response);
+}
+
+export async function getPullRequestDiff(
+  github_pat: string,
+  owner: string,
+  repo: string,
+  pullNumber: number
+): Promise<string> {
+  const response = await githubRequest(
+    github_pat,
+    `https://api.github.com/repos/${owner}/${repo}/pulls/${pullNumber}`,
+    {
+      headers: {
+        "Accept": "application/vnd.github.diff"
+      }
+    }
+  );
+  
+  // The response is already a string because the content type is not JSON
+  return response as string;
 }

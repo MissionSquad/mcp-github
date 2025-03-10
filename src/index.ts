@@ -302,6 +302,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         description: "Get a package for a repository",
         inputSchema: zodToJsonSchema(packages.GetRepoPackageSchema),
       },
+      // Pull Request Diff
+      {
+        name: "get_pull_request_diff",
+        description: "Get the diff for a pull request",
+        inputSchema: zodToJsonSchema(pulls.GetPullRequestDiffSchema),
+      },
     ],
   };
 });
@@ -755,6 +761,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const result = await packages.getRepoPackage(github_pat, owner, repo, package_type, package_name);
         return {
           content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      // Pull Request Diff
+      case "get_pull_request_diff": {
+        const args = pulls._GetPullRequestDiffSchema.parse(params.arguments);
+        const { github_pat, owner, repo, pull_number } = args;
+        const result = await pulls.getPullRequestDiff(github_pat, owner, repo, pull_number);
+        return {
+          content: [{ type: "text", text: result }],
         };
       }
 
