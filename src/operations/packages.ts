@@ -32,9 +32,9 @@ export const PackageSchema = z.object({
 // Input schemas
 export const ListOrgPackagesSchema = z.object({
   org: z.string().describe("Organization name"),
-  package_type: z.enum(["npm", "maven", "rubygems", "docker", "nuget", "container"]).optional().describe("The type of package to filter for"),
+  package_type: z.enum(["npm", "maven", "rubygems", "docker", "nuget", "container"]).describe("The type of package to filter for"),
   visibility: z.enum(["public", "private", "internal"]).optional().describe("The visibility to filter for"),
-  per_page: z.number().optional().describe("Results per page (max 100)"),
+  per_page: z.number().optional().describe("Results per page (max 100, default 30)"),
   page: z.number().optional().describe("Page number of the results"),
 });
 
@@ -102,11 +102,11 @@ export async function listOrgPackages(
   github_pat: string,
   org: string,
   options: {
-    package_type?: "npm" | "maven" | "rubygems" | "docker" | "nuget" | "container";
+    package_type: "npm" | "maven" | "rubygems" | "docker" | "nuget" | "container";
     visibility?: "public" | "private" | "internal";
     per_page?: number;
     page?: number;
-  } = {}
+  } = { package_type: "npm" }
 ): Promise<z.infer<typeof PackageSchema>[]> {
   const url = new URL(`https://api.github.com/orgs/${org}/packages`);
   

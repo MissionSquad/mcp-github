@@ -40,7 +40,7 @@ export async function githubRequest(
     ...options.headers,
   };
 
-  if (process.env.GITHUB_PERSONAL_ACCESS_TOKEN) {
+  if (github_pat != null) {
     headers["Authorization"] = `Bearer ${github_pat}`;
   }
 
