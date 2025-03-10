@@ -15,6 +15,11 @@ import * as pulls from './operations/pulls.js';
 import * as branches from './operations/branches.js';
 import * as search from './operations/search.js';
 import * as commits from './operations/commits.js';
+import * as releases from './operations/releases.js';
+import * as statuses from './operations/statuses.js';
+import * as rate_limit from './operations/rate_limit.js';
+import * as gists from './operations/gists.js';
+import * as projects from './operations/projects.js';
 import {
   GitHubError,
   GitHubValidationError,
@@ -153,7 +158,118 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: "get_issue",
         description: "Get details of a specific issue in a GitHub repository.",
         inputSchema: zodToJsonSchema(issues.GetIssueSchema)
-      }
+      },
+      // Releases and Tags
+      {
+        name: "create_release",
+        description: "Create a new release in a GitHub repository",
+        inputSchema: zodToJsonSchema(releases.CreateReleaseSchema),
+      },
+      {
+        name: "list_releases",
+        description: "List releases for a GitHub repository",
+        inputSchema: zodToJsonSchema(releases.ListReleasesSchema),
+      },
+      {
+        name: "delete_release",
+        description: "Delete a release from a GitHub repository",
+        inputSchema: zodToJsonSchema(releases.DeleteReleaseSchema),
+      },
+      {
+        name: "get_release_asset",
+        description: "Get a release asset from a GitHub repository",
+        inputSchema: zodToJsonSchema(releases.GetReleaseAssetSchema),
+      },
+      {
+        name: "upload_release_asset",
+        description: "Upload an asset to a GitHub release",
+        inputSchema: zodToJsonSchema(releases.UploadReleaseAssetSchema),
+      },
+      {
+        name: "create_tag",
+        description: "Create a new tag in a GitHub repository",
+        inputSchema: zodToJsonSchema(releases.CreateTagSchema),
+      },
+      // Pull Request Reviews
+      {
+        name: "create_pull_request_review",
+        description: "Create a review for a pull request",
+        inputSchema: zodToJsonSchema(pulls.CreatePullRequestReviewSchema),
+      },
+      {
+        name: "submit_pull_request_review",
+        description: "Submit a pull request review (approve, request changes, or comment)",
+        inputSchema: zodToJsonSchema(pulls.SubmitPullRequestReviewSchema),
+      },
+      {
+        name: "dismiss_pull_request_review",
+        description: "Dismiss a pull request review",
+        inputSchema: zodToJsonSchema(pulls.DismissPullRequestReviewSchema),
+      },
+      // Statuses and Checks
+      {
+        name: "create_commit_status",
+        description: "Create a status for a commit (build passed/failed, etc.)",
+        inputSchema: zodToJsonSchema(statuses.CreateCommitStatusSchema),
+      },
+      {
+        name: "get_commit_statuses",
+        description: "Get statuses for a commit",
+        inputSchema: zodToJsonSchema(statuses.GetCommitStatusesSchema),
+      },
+      {
+        name: "get_combined_status",
+        description: "Get the combined status for a commit",
+        inputSchema: zodToJsonSchema(statuses.GetCombinedStatusSchema),
+      },
+      // Rate Limit Info
+      {
+        name: "get_rate_limit",
+        description: "Check the current rate limit status",
+        inputSchema: zodToJsonSchema(rate_limit.GetRateLimitSchema),
+      },
+      // Gists
+      {
+        name: "create_gist",
+        description: "Create a new gist",
+        inputSchema: zodToJsonSchema(gists.CreateGistSchema),
+      },
+      {
+        name: "list_gists",
+        description: "List gists for the authenticated user",
+        inputSchema: zodToJsonSchema(gists.ListGistsSchema),
+      },
+      {
+        name: "get_gist",
+        description: "Get a specific gist",
+        inputSchema: zodToJsonSchema(gists.GetGistSchema),
+      },
+      // Project Boards
+      {
+        name: "list_projects",
+        description: "List projects for a repository",
+        inputSchema: zodToJsonSchema(projects.ListProjectsSchema),
+      },
+      {
+        name: "create_project",
+        description: "Create a new project for a repository",
+        inputSchema: zodToJsonSchema(projects.CreateProjectSchema),
+      },
+      {
+        name: "list_project_columns",
+        description: "List columns for a project",
+        inputSchema: zodToJsonSchema(projects.ListProjectColumnsSchema),
+      },
+      {
+        name: "create_project_column",
+        description: "Create a new column for a project",
+        inputSchema: zodToJsonSchema(projects.CreateProjectColumnSchema),
+      },
+      {
+        name: "create_project_card",
+        description: "Create a new card in a project column",
+        inputSchema: zodToJsonSchema(projects.CreateProjectCardSchema),
+      },
     ],
   };
 });
@@ -354,6 +470,204 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const issue = await issues.getIssue(args.github_pat, args.owner, args.repo, args.issue_number);
         return {
           content: [{ type: "text", text: JSON.stringify(issue, null, 2) }],
+        };
+      }
+
+      // Releases and Tags
+      case "create_release": {
+        const args = releases._CreateReleaseSchema.parse(params.arguments);
+        const { github_pat, owner, repo, ...options } = args;
+        const result = await releases.createRelease(github_pat, owner, repo, options);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "list_releases": {
+        const args = releases._ListReleasesSchema.parse(params.arguments);
+        const { github_pat, owner, repo, ...options } = args;
+        const result = await releases.listReleases(github_pat, owner, repo, options);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "delete_release": {
+        const args = releases._DeleteReleaseSchema.parse(params.arguments);
+        await releases.deleteRelease(args.github_pat, args.owner, args.repo, args.release_id);
+        return {
+          content: [{ type: "text", text: JSON.stringify({ success: true }, null, 2) }],
+        };
+      }
+
+      case "get_release_asset": {
+        const args = releases._GetReleaseAssetSchema.parse(params.arguments);
+        const result = await releases.getReleaseAsset(args.github_pat, args.owner, args.repo, args.asset_id);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "upload_release_asset": {
+        const args = releases._UploadReleaseAssetSchema.parse(params.arguments);
+        const { github_pat, owner, repo, release_id, name, content, content_type, label } = args;
+        const result = await releases.uploadReleaseAsset(
+          github_pat, owner, repo, release_id, name, content, content_type, label
+        );
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "create_tag": {
+        const args = releases._CreateTagSchema.parse(params.arguments);
+        const { github_pat, owner, repo, ref, sha } = args;
+        const result = await releases.createTag(github_pat, owner, repo, ref, sha);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      // Pull Request Reviews
+      case "create_pull_request_review": {
+        const args = pulls._CreatePullRequestReviewSchema.parse(params.arguments);
+        const { github_pat, owner, repo, pull_number, ...options } = args;
+        const result = await pulls.createPullRequestReview(github_pat, owner, repo, pull_number, options);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "submit_pull_request_review": {
+        const args = pulls._SubmitPullRequestReviewSchema.parse(params.arguments);
+        const { github_pat, owner, repo, pull_number, review_id, event, body } = args;
+        const result = await pulls.submitPullRequestReview(
+          github_pat, owner, repo, pull_number, review_id, event, body
+        );
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "dismiss_pull_request_review": {
+        const args = pulls._DismissPullRequestReviewSchema.parse(params.arguments);
+        const { github_pat, owner, repo, pull_number, review_id, message } = args;
+        const result = await pulls.dismissPullRequestReview(
+          github_pat, owner, repo, pull_number, review_id, message
+        );
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      // Statuses and Checks
+      case "create_commit_status": {
+        const args = statuses._CreateCommitStatusSchema.parse(params.arguments);
+        const { github_pat, owner, repo, sha, state, ...options } = args;
+        const result = await statuses.createCommitStatus(github_pat, owner, repo, sha, state, options);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "get_commit_statuses": {
+        const args = statuses._GetCommitStatusesSchema.parse(params.arguments);
+        const { github_pat, owner, repo, ref } = args;
+        const result = await statuses.getCommitStatuses(github_pat, owner, repo, ref);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "get_combined_status": {
+        const args = statuses._GetCombinedStatusSchema.parse(params.arguments);
+        const { github_pat, owner, repo, ref } = args;
+        const result = await statuses.getCombinedStatus(github_pat, owner, repo, ref);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      // Rate Limit Info
+      case "get_rate_limit": {
+        const args = rate_limit._GetRateLimitSchema.parse(params.arguments);
+        const result = await rate_limit.getRateLimit(args.github_pat);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      // Gists
+      case "create_gist": {
+        const args = gists._CreateGistSchema.parse(params.arguments);
+        const { github_pat, description, public: isPublic, files } = args;
+        const result = await gists.createGist(github_pat, description, isPublic, files);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "list_gists": {
+        const args = gists._ListGistsSchema.parse(params.arguments);
+        const { github_pat, ...options } = args;
+        const result = await gists.listGists(github_pat, options);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "get_gist": {
+        const args = gists._GetGistSchema.parse(params.arguments);
+        const { github_pat, gist_id } = args;
+        const result = await gists.getGist(github_pat, gist_id);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      // Project Boards
+      case "list_projects": {
+        const args = projects._ListProjectsSchema.parse(params.arguments);
+        const { github_pat, owner, repo, ...options } = args;
+        const result = await projects.listProjects(github_pat, owner, repo, options);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "create_project": {
+        const args = projects._CreateProjectSchema.parse(params.arguments);
+        const { github_pat, owner, repo, name, body } = args;
+        const result = await projects.createProject(github_pat, owner, repo, name, body);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "list_project_columns": {
+        const args = projects._ListProjectColumnsSchema.parse(params.arguments);
+        const { github_pat, project_id, ...options } = args;
+        const result = await projects.listProjectColumns(github_pat, project_id, options);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "create_project_column": {
+        const args = projects._CreateProjectColumnSchema.parse(params.arguments);
+        const { github_pat, project_id, name } = args;
+        const result = await projects.createProjectColumn(github_pat, project_id, name);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "create_project_card": {
+        const args = projects._CreateProjectCardSchema.parse(params.arguments);
+        const { github_pat, column_id, note } = args;
+        const result = await projects.createProjectCard(github_pat, column_id, note);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
         };
       }
 

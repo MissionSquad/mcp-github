@@ -123,6 +123,35 @@ export const CreatePullRequestReviewSchema = z.object({
   })).optional().describe("Comments to post as part of the review")
 });
 
+export const _CreatePullRequestReviewSchema = CreatePullRequestReviewSchema.extend({
+  github_pat: z.string().describe("GitHub Personal Access Token"),
+});
+
+export const SubmitPullRequestReviewSchema = z.object({
+  owner: z.string().describe("Repository owner (username or organization)"),
+  repo: z.string().describe("Repository name"),
+  pull_number: z.number().describe("Pull request number"),
+  review_id: z.number().describe("The ID of the review"),
+  event: z.enum(['APPROVE', 'REQUEST_CHANGES', 'COMMENT']).describe("The review action to perform"),
+  body: z.string().optional().describe("The body text of the review submission")
+});
+
+export const _SubmitPullRequestReviewSchema = SubmitPullRequestReviewSchema.extend({
+  github_pat: z.string().describe("GitHub Personal Access Token"),
+});
+
+export const DismissPullRequestReviewSchema = z.object({
+  owner: z.string().describe("Repository owner (username or organization)"),
+  repo: z.string().describe("Repository name"),
+  pull_number: z.number().describe("Pull request number"),
+  review_id: z.number().describe("The ID of the review"),
+  message: z.string().describe("The message explaining why the review was dismissed")
+});
+
+export const _DismissPullRequestReviewSchema = DismissPullRequestReviewSchema.extend({
+  github_pat: z.string().describe("GitHub Personal Access Token"),
+});
+
 export const MergePullRequestSchema = z.object({
   owner: z.string().describe("Repository owner (username or organization)"),
   repo: z.string().describe("Repository name"),
@@ -228,6 +257,50 @@ export async function createPullRequestReview(
     {
       method: 'POST',
       body: options,
+    }
+  );
+  return PullRequestReviewSchema.parse(response);
+}
+
+export async function submitPullRequestReview(
+  github_pat: string,
+  owner: string,
+  repo: string,
+  pullNumber: number,
+  reviewId: number,
+  event: 'APPROVE' | 'REQUEST_CHANGES' | 'COMMENT',
+  body?: string
+): Promise<z.infer<typeof PullRequestReviewSchema>> {
+  const response = await githubRequest(
+    github_pat,
+    `https://api.github.com/repos/${owner}/${repo}/pulls/${pullNumber}/reviews/${reviewId}/events`,
+    {
+      method: 'POST',
+      body: {
+        event,
+        body,
+      },
+    }
+  );
+  return PullRequestReviewSchema.parse(response);
+}
+
+export async function dismissPullRequestReview(
+  github_pat: string,
+  owner: string,
+  repo: string,
+  pullNumber: number,
+  reviewId: number,
+  message: string
+): Promise<z.infer<typeof PullRequestReviewSchema>> {
+  const response = await githubRequest(
+    github_pat,
+    `https://api.github.com/repos/${owner}/${repo}/pulls/${pullNumber}/reviews/${reviewId}/dismissals`,
+    {
+      method: 'PUT',
+      body: {
+        message,
+      },
     }
   );
   return PullRequestReviewSchema.parse(response);
