@@ -20,6 +20,7 @@ import * as statuses from './operations/statuses.js';
 import * as rate_limit from './operations/rate_limit.js';
 import * as gists from './operations/gists.js';
 import * as projects from './operations/projects.js';
+import * as packages from './operations/packages.js';
 import {
   GitHubError,
   GitHubValidationError,
@@ -269,6 +270,37 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: "create_project_card",
         description: "Create a new card in a project column",
         inputSchema: zodToJsonSchema(projects.CreateProjectCardSchema),
+      },
+      // Packages
+      {
+        name: "list_org_packages",
+        description: "List packages for an organization",
+        inputSchema: zodToJsonSchema(packages.ListOrgPackagesSchema),
+      },
+      {
+        name: "list_user_packages",
+        description: "List packages for a user",
+        inputSchema: zodToJsonSchema(packages.ListUserPackagesSchema),
+      },
+      {
+        name: "list_repo_packages",
+        description: "List packages for a repository",
+        inputSchema: zodToJsonSchema(packages.ListRepoPackagesSchema),
+      },
+      {
+        name: "get_org_package",
+        description: "Get a package for an organization",
+        inputSchema: zodToJsonSchema(packages.GetOrgPackageSchema),
+      },
+      {
+        name: "get_user_package",
+        description: "Get a package for a user",
+        inputSchema: zodToJsonSchema(packages.GetUserPackageSchema),
+      },
+      {
+        name: "get_repo_package",
+        description: "Get a package for a repository",
+        inputSchema: zodToJsonSchema(packages.GetRepoPackageSchema),
       },
     ],
   };
@@ -666,6 +698,61 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const args = projects._CreateProjectCardSchema.parse(params.arguments);
         const { github_pat, column_id, note } = args;
         const result = await projects.createProjectCard(github_pat, column_id, note);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      // Packages
+      case "list_org_packages": {
+        const args = packages._ListOrgPackagesSchema.parse(params.arguments);
+        const { github_pat, org, ...options } = args;
+        const result = await packages.listOrgPackages(github_pat, org, options);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "list_user_packages": {
+        const args = packages._ListUserPackagesSchema.parse(params.arguments);
+        const { github_pat, username, ...options } = args;
+        const result = await packages.listUserPackages(github_pat, username, options);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "list_repo_packages": {
+        const args = packages._ListRepoPackagesSchema.parse(params.arguments);
+        const { github_pat, owner, repo, ...options } = args;
+        const result = await packages.listRepoPackages(github_pat, owner, repo, options);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "get_org_package": {
+        const args = packages._GetOrgPackageSchema.parse(params.arguments);
+        const { github_pat, org, package_type, package_name } = args;
+        const result = await packages.getOrgPackage(github_pat, org, package_type, package_name);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "get_user_package": {
+        const args = packages._GetUserPackageSchema.parse(params.arguments);
+        const { github_pat, username, package_type, package_name } = args;
+        const result = await packages.getUserPackage(github_pat, username, package_type, package_name);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "get_repo_package": {
+        const args = packages._GetRepoPackageSchema.parse(params.arguments);
+        const { github_pat, owner, repo, package_type, package_name } = args;
+        const result = await packages.getRepoPackage(github_pat, owner, repo, package_type, package_name);
         return {
           content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
         };
