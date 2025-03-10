@@ -25,7 +25,7 @@ export const PackageSchema = z.object({
   created_at: z.string(),
   updated_at: z.string(),
   html_url: z.string(),
-  versions_url: z.string(),
+  versions_url: z.string().optional(),
   repository_url: z.string().optional(),
 });
 
@@ -127,7 +127,7 @@ export async function listUserPackages(
     visibility?: "public" | "private" | "internal";
     per_page?: number;
     page?: number;
-  } = {}
+  } = { package_type: "npm" }
 ): Promise<z.infer<typeof PackageSchema>[]> {
   const url = new URL(`https://api.github.com/users/${username}/packages`);
   
