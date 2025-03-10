@@ -10,16 +10,28 @@ export const CreateRepositoryOptionsSchema = z.object({
   autoInit: z.boolean().optional().describe("Initialize with README.md"),
 });
 
+export const _CreateRepositoryOptionsSchema = CreateRepositoryOptionsSchema.extend({
+  github_pat: z.string().describe("GitHub Personal Access Token"),
+});
+
 export const SearchRepositoriesSchema = z.object({
   query: z.string().describe("Search query (see GitHub search syntax)"),
   page: z.number().optional().describe("Page number for pagination (default: 1)"),
   perPage: z.number().optional().describe("Number of results per page (default: 30, max: 100)"),
 });
 
+export const _SearchRepositoriesSchema = SearchRepositoriesSchema.extend({
+  github_pat: z.string().describe("GitHub Personal Access Token"),
+});
+
 export const ForkRepositorySchema = z.object({
   owner: z.string().describe("Repository owner (username or organization)"),
   repo: z.string().describe("Repository name"),
   organization: z.string().optional().describe("Optional: organization to fork to (defaults to your personal account)"),
+});
+
+export const _ForkRepositorySchema = ForkRepositorySchema.extend({
+  github_pat: z.string().describe("GitHub Personal Access Token"),
 });
 
 // Type exports

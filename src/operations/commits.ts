@@ -9,6 +9,10 @@ export const ListCommitsSchema = z.object({
   perPage: z.number().optional()
 });
 
+export const _ListCommitsSchema = ListCommitsSchema.extend({
+  github_pat: z.string()
+});
+
 export async function listCommits(
   github_pat: string,
   owner: string,

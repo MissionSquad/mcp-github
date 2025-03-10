@@ -25,11 +25,19 @@ export const CreateOrUpdateFileSchema = z.object({
   sha: z.string().optional().describe("SHA of the file being replaced (required when updating existing files)"),
 });
 
+export const _CreateOrUpdateFileSchema = CreateOrUpdateFileSchema.extend({
+  github_pat: z.string().describe("GitHub Personal Access Token"),
+});
+
 export const GetFileContentsSchema = z.object({
   owner: z.string().describe("Repository owner (username or organization)"),
   repo: z.string().describe("Repository name"),
   path: z.string().describe("Path to the file or directory"),
   branch: z.string().optional().describe("Branch to get contents from"),
+});
+
+export const _GetFileContentsSchema = GetFileContentsSchema.extend({
+  github_pat: z.string().describe("GitHub Personal Access Token"),
 });
 
 export const PushFilesSchema = z.object({
@@ -38,6 +46,10 @@ export const PushFilesSchema = z.object({
   branch: z.string().describe("Branch to push to (e.g., 'main' or 'master')"),
   files: z.array(FileOperationSchema).describe("Array of files to push"),
   message: z.string().describe("Commit message"),
+});
+
+export const _PushFilesSchema = PushFilesSchema.extend({
+  github_pat: z.string().describe("GitHub Personal Access Token"),
 });
 
 export const GitHubCreateUpdateFileResponseSchema = z.object({

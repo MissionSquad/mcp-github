@@ -27,13 +27,13 @@ import {
 } from './common/errors.js';
 import { VERSION } from "./common/version.js";
 
-const CallToolRequestPATSchema = CallToolRequestSchema.extend({
-  github_pat: z.string().describe("GitHub Personal Access Token"),
-});
+// const CallToolRequestPATSchema = CallToolRequestSchema.extend({
+//   github_pat: z.string().describe("GitHub Personal Access Token"),
+// });
 
 const server = new Server(
   {
-    name: "github-mcp-server",
+    name: "mcp-github",
     version: VERSION,
   },
   {
@@ -158,28 +158,32 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   };
 });
 
-server.setRequestHandler(CallToolRequestPATSchema, async (request) => {
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
-    if (!request.github_pat) {
-      throw new Error("GitHub PAT is required");
-    }
-    if (!request.params.arguments) {
+    // const CallToolRequestPATSchema = CallToolRequestSchema.extend({
+    //   github_pat: z.string().describe("GitHub Personal Access Token"),
+    // });
+    // const requestWithPat = CallToolRequestPATSchema.parse(request);
+    const { params } = request;
+    if (!params.arguments) {
       throw new Error("Arguments are required");
     }
-    const { github_pat, params } = request;
-    switch (request.params.name) {
+    if (!params.arguments.github_pat) {
+      throw new Error("GitHub PAT is required");
+    }
+    switch (params.name) {
       case "fork_repository": {
-        const args = repository.ForkRepositorySchema.parse(request.params.arguments);
-        const fork = await repository.forkRepository(github_pat, args.owner, args.repo, args.organization);
+        const args = repository._ForkRepositorySchema.parse(params.arguments);
+        const fork = await repository.forkRepository(args.github_pat, args.owner, args.repo, args.organization);
         return {
           content: [{ type: "text", text: JSON.stringify(fork, null, 2) }],
         };
       }
 
       case "create_branch": {
-        const args = branches.CreateBranchSchema.parse(request.params.arguments);
+        const args = branches._CreateBranchSchema.parse(params.arguments);
         const branch = await branches.createBranchFromRef(
-          github_pat,
+          args.github_pat,
           args.owner,
           args.repo,
           args.branch,
@@ -191,9 +195,9 @@ server.setRequestHandler(CallToolRequestPATSchema, async (request) => {
       }
 
       case "search_repositories": {
-        const args = repository.SearchRepositoriesSchema.parse(request.params.arguments);
+        const args = repository._SearchRepositoriesSchema.parse(params.arguments);
         const results = await repository.searchRepositories(
-          github_pat,
+          args.github_pat,
           args.query,
           args.page,
           args.perPage
@@ -204,7 +208,8 @@ server.setRequestHandler(CallToolRequestPATSchema, async (request) => {
       }
 
       case "create_repository": {
-        const args = repository.CreateRepositoryOptionsSchema.parse(request.params.arguments);
+        const argsWithPat = repository._CreateRepositoryOptionsSchema.parse(params.arguments);
+        const { github_pat, ...args } = argsWithPat;
         const result = await repository.createRepository(github_pat, args);
         return {
           content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
@@ -212,9 +217,9 @@ server.setRequestHandler(CallToolRequestPATSchema, async (request) => {
       }
 
       case "get_file_contents": {
-        const args = files.GetFileContentsSchema.parse(request.params.arguments);
+        const args = files._GetFileContentsSchema.parse(params.arguments);
         const contents = await files.getFileContents(
-          github_pat,
+          args.github_pat,
           args.owner,
           args.repo,
           args.path,
@@ -226,9 +231,9 @@ server.setRequestHandler(CallToolRequestPATSchema, async (request) => {
       }
 
       case "create_or_update_file": {
-        const args = files.CreateOrUpdateFileSchema.parse(request.params.arguments);
+        const args = files._CreateOrUpdateFileSchema.parse(params.arguments);
         const result = await files.createOrUpdateFile(
-          github_pat,
+          args.github_pat,
           args.owner,
           args.repo,
           args.path,
@@ -243,9 +248,9 @@ server.setRequestHandler(CallToolRequestPATSchema, async (request) => {
       }
 
       case "push_files": {
-        const args = files.PushFilesSchema.parse(request.params.arguments);
+        const args = files._PushFilesSchema.parse(params.arguments);
         const result = await files.pushFiles(
-          github_pat,
+          args.github_pat,
           args.owner,
           args.repo,
           args.branch,
@@ -258,8 +263,8 @@ server.setRequestHandler(CallToolRequestPATSchema, async (request) => {
       }
 
       case "create_issue": {
-        const args = issues.CreateIssueSchema.parse(request.params.arguments);
-        const { owner, repo, ...options } = args;
+        const args = issues._CreateIssueSchema.parse(params.arguments);
+        const { github_pat, owner, repo, ...options } = args;
         const issue = await issues.createIssue(github_pat, owner, repo, options);
         return {
           content: [{ type: "text", text: JSON.stringify(issue, null, 2) }],
@@ -267,7 +272,8 @@ server.setRequestHandler(CallToolRequestPATSchema, async (request) => {
       }
 
       case "create_pull_request": {
-        const args = pulls.CreatePullRequestSchema.parse(request.params.arguments);
+        const argsWithPat = pulls._CreatePullRequestSchema.parse(params.arguments);
+        const { github_pat, ...args } = argsWithPat;
         const pullRequest = await pulls.createPullRequest(github_pat, args);
         return {
           content: [{ type: "text", text: JSON.stringify(pullRequest, null, 2) }],
@@ -275,7 +281,8 @@ server.setRequestHandler(CallToolRequestPATSchema, async (request) => {
       }
 
       case "search_code": {
-        const args = search.SearchCodeSchema.parse(request.params.arguments);
+        const argsWithPat = search._SearchCodeSchema.parse(params.arguments);
+        const { github_pat, ...args } = argsWithPat;
         const results = await search.searchCode(github_pat, args);
         return {
           content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
@@ -283,7 +290,8 @@ server.setRequestHandler(CallToolRequestPATSchema, async (request) => {
       }
 
       case "search_issues": {
-        const args = search.SearchIssuesSchema.parse(request.params.arguments);
+        const argsWithPat = search._SearchIssuesSchema.parse(params.arguments);
+        const { github_pat, ...args } = argsWithPat;
         const results = await search.searchIssues(github_pat, args);
         return {
           content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
@@ -291,7 +299,8 @@ server.setRequestHandler(CallToolRequestPATSchema, async (request) => {
       }
 
       case "search_users": {
-        const args = search.SearchUsersSchema.parse(request.params.arguments);
+        const argsWithPat = search._SearchUsersSchema.parse(params.arguments);
+        const { github_pat, ...args } = argsWithPat;
         const results = await search.searchUsers(github_pat, args);
         return {
           content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
@@ -299,8 +308,8 @@ server.setRequestHandler(CallToolRequestPATSchema, async (request) => {
       }
 
       case "list_issues": {
-        const args = issues.ListIssuesOptionsSchema.parse(request.params.arguments);
-        const { owner, repo, ...options } = args;
+        const args = issues._ListIssuesOptionsSchema.parse(params.arguments);
+        const { github_pat, owner, repo, ...options } = args;
         const result = await issues.listIssues(github_pat, owner, repo, options);
         return {
           content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
@@ -308,8 +317,8 @@ server.setRequestHandler(CallToolRequestPATSchema, async (request) => {
       }
 
       case "update_issue": {
-        const args = issues.UpdateIssueOptionsSchema.parse(request.params.arguments);
-        const { owner, repo, issue_number, ...options } = args;
+        const argsWithPat = issues._UpdateIssueOptionsSchema.parse(params.arguments);
+        const { github_pat, owner, repo, issue_number, ...options } = argsWithPat;
         const result = await issues.updateIssue(github_pat, owner, repo, issue_number, options);
         return {
           content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
@@ -317,8 +326,8 @@ server.setRequestHandler(CallToolRequestPATSchema, async (request) => {
       }
 
       case "add_issue_comment": {
-        const args = issues.IssueCommentSchema.parse(request.params.arguments);
-        const { owner, repo, issue_number, body } = args;
+        const argsWithPat = issues._IssueCommentSchema.parse(params.arguments);
+        const { github_pat, owner, repo, issue_number, body } = argsWithPat;
         const result = await issues.addIssueComment(github_pat, owner, repo, issue_number, body);
         return {
           content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
@@ -326,9 +335,9 @@ server.setRequestHandler(CallToolRequestPATSchema, async (request) => {
       }
 
       case "list_commits": {
-        const args = commits.ListCommitsSchema.parse(request.params.arguments);
+        const args = commits._ListCommitsSchema.parse(params.arguments);
         const results = await commits.listCommits(
-          github_pat,
+          args.github_pat,
           args.owner,
           args.repo,
           args.page,
@@ -341,15 +350,15 @@ server.setRequestHandler(CallToolRequestPATSchema, async (request) => {
       }
 
       case "get_issue": {
-        const args = issues.GetIssueSchema.parse(request.params.arguments);
-        const issue = await issues.getIssue(github_pat, args.owner, args.repo, args.issue_number);
+        const args = issues._GetIssueSchema.parse(params.arguments);
+        const issue = await issues.getIssue(args.github_pat, args.owner, args.repo, args.issue_number);
         return {
           content: [{ type: "text", text: JSON.stringify(issue, null, 2) }],
         };
       }
 
       default:
-        throw new Error(`Unknown tool: ${request.params.name}`);
+        throw new Error(`Unknown tool: ${params.name}`);
     }
   } catch (error) {
     if (error instanceof z.ZodError) {

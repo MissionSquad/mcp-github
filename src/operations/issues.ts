@@ -7,11 +7,19 @@ export const GetIssueSchema = z.object({
   issue_number: z.number(),
 });
 
+export const _GetIssueSchema = GetIssueSchema.extend({
+  github_pat: z.string().describe("GitHub Personal Access Token"),
+});
+
 export const IssueCommentSchema = z.object({
   owner: z.string(),
   repo: z.string(),
   issue_number: z.number(),
   body: z.string(),
+});
+
+export const _IssueCommentSchema = IssueCommentSchema.extend({
+  github_pat: z.string().describe("GitHub Personal Access Token"),
 });
 
 export const CreateIssueOptionsSchema = z.object({
@@ -28,6 +36,10 @@ export const CreateIssueSchema = z.object({
   ...CreateIssueOptionsSchema.shape,
 });
 
+export const _CreateIssueSchema = CreateIssueSchema.extend({
+  github_pat: z.string().describe("GitHub Personal Access Token"),
+});
+
 export const ListIssuesOptionsSchema = z.object({
   owner: z.string(),
   repo: z.string(),
@@ -40,6 +52,10 @@ export const ListIssuesOptionsSchema = z.object({
   state: z.enum(["open", "closed", "all"]).optional(),
 });
 
+export const _ListIssuesOptionsSchema = ListIssuesOptionsSchema.extend({
+  github_pat: z.string().describe("GitHub Personal Access Token"),
+});
+
 export const UpdateIssueOptionsSchema = z.object({
   owner: z.string(),
   repo: z.string(),
@@ -50,6 +66,10 @@ export const UpdateIssueOptionsSchema = z.object({
   milestone: z.number().optional(),
   labels: z.array(z.string()).optional(),
   state: z.enum(["open", "closed"]).optional(),
+});
+
+export const _UpdateIssueOptionsSchema = UpdateIssueOptionsSchema.extend({
+  github_pat: z.string().describe("GitHub Personal Access Token"),
 });
 
 export async function getIssue(github_pat: string, owner: string, repo: string, issue_number: number) {

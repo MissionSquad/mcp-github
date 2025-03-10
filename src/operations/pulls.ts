@@ -87,6 +87,10 @@ export const CreatePullRequestSchema = z.object({
   maintainer_can_modify: z.boolean().optional().describe("Whether maintainers can modify the pull request")
 });
 
+export const _CreatePullRequestSchema = CreatePullRequestSchema.extend({
+  github_pat: z.string().describe("GitHub Personal Access Token"),
+});
+
 export const GetPullRequestSchema = z.object({
   owner: z.string().describe("Repository owner (username or organization)"),
   repo: z.string().describe("Repository name"),

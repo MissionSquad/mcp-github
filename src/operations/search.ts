@@ -29,8 +29,17 @@ export const SearchIssuesOptions = SearchOptions.extend({
 });
 
 export const SearchCodeSchema = SearchOptions;
+export const _SearchCodeSchema = SearchCodeSchema.extend({
+  github_pat: z.string().describe("GitHub Personal Access Token"),
+});
 export const SearchUsersSchema = SearchUsersOptions;
+export const _SearchUsersSchema = SearchUsersSchema.extend({
+  github_pat: z.string().describe("GitHub Personal Access Token"),
+});
 export const SearchIssuesSchema = SearchIssuesOptions;
+export const _SearchIssuesSchema = SearchIssuesSchema.extend({
+  github_pat: z.string().describe("GitHub Personal Access Token"),
+});
 
 export async function searchCode(github_pat: string, params: z.infer<typeof SearchCodeSchema>) {
   return githubRequest(github_pat, buildUrl("https://api.github.com/search/code", params));

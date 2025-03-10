@@ -15,6 +15,10 @@ export const CreateBranchSchema = z.object({
   from_branch: z.string().optional().describe("Optional: source branch to create from (defaults to the repository's default branch)"),
 });
 
+export const _CreateBranchSchema = CreateBranchSchema.extend({
+  github_pat: z.string().describe("GitHub Personal Access Token"),
+});
+
 // Type exports
 export type CreateBranchOptions = z.infer<typeof CreateBranchOptionsSchema>;
 
