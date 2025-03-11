@@ -314,10 +314,6 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
-    // const CallToolRequestPATSchema = CallToolRequestSchema.extend({
-    //   github_pat: z.string().describe("GitHub Personal Access Token"),
-    // });
-    // const requestWithPat = CallToolRequestPATSchema.parse(request);
     const { params } = request;
     if (!params.arguments) {
       throw new Error("Arguments are required");
@@ -380,7 +376,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           args.branch
         );
         return {
-          content: [{ type: "object", object: contents }],
+          content: [{ type: "text", text: JSON.stringify(contents, null, 2) }],
         };
       }
 
