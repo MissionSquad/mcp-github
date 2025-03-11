@@ -369,9 +369,27 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case "get_file_contents": {
         const args = files._GetFileContentsSchema.parse(params.arguments);
         const contents = await files.getFileContents(args);
-        
+        let text = '';
+        if (Array.isArray(contents)) {
+          // this means it's a directory
+          text = `Directory Contents:\n${contents.map(c => `- ${c.path} (${c.type}, ${c.size} bytes)`).join('\n')}`
+        } else {
+          // this means it's a singular file
+          text = 
+`File Name: ${contents.name}
+File Path: ${contents.path}
+File SHA: ${contents.sha}
+File Size: ${contents.size}
+File URL: ${contents.url}
+File HTML URL: ${contents.html_url}
+File Download URL: ${contents.download_url}
+File Type: ${contents.type}
+File Content: ${contents.content}
+File Encoding: ${contents.encoding}
+`
+        }
         return {
-          content: [{ type: "text", text: JSON.stringify(contents, null, 2) }],
+          content: [{ type: "text", text }],
         };
       }
 
