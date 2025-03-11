@@ -33,6 +33,7 @@ export const GetFileContentsSchema = z.object({
   owner: z.string().describe("Repository owner (username or organization)"),
   repo: z.string().describe("Repository name"),
   path: z.string().describe("Path to the file or directory"),
+  encoded: z.boolean().optional().describe("Whether to return the content encoded in base64 (default = true)"),
   branch: z.string().optional().describe("Branch to get contents from"),
 });
 
@@ -82,11 +83,9 @@ export type GitHubCreateUpdateFileResponse = z.infer<typeof GitHubCreateUpdateFi
 
 // Function implementations
 export async function getFileContents(
-  github_pat: string,
-  owner: string,
-  repo: string,
-  path: string,
-  branch?: string
+  { github_pat, owner, repo, path, encoded = true, branch }: z.infer<
+    typeof _GetFileContentsSchema
+  >,
 ) {
   let url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
   if (branch) {
@@ -96,8 +95,8 @@ export async function getFileContents(
   const response = await githubRequest(github_pat, url);
   const data = GitHubContentSchema.parse(response);
 
-  // If it's a file, decode the content
-  if (!Array.isArray(data) && data.content) {
+  // If it's a file, decode the content?
+  if (!Array.isArray(data) && data.content && !encoded) {
     data.content = Buffer.from(data.content, "base64").toString("utf8");
   }
 
@@ -114,12 +113,11 @@ export async function createOrUpdateFile(
   branch: string,
   sha?: string
 ) {
-  const encodedContent = Buffer.from(content).toString("base64");
-
+  
   let currentSha = sha;
   if (!currentSha) {
     try {
-      const existingFile = await getFileContents(owner, repo, path, branch);
+      const existingFile = await getFileContents({github_pat, owner, repo, path, branch});
       if (!Array.isArray(existingFile)) {
         currentSha = existingFile.sha;
       }
@@ -127,7 +125,8 @@ export async function createOrUpdateFile(
       console.error("Note: File does not exist in branch, will create new file");
     }
   }
-
+  
+  const encodedContent = Buffer.from(content).toString("base64");
   const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
   const body = {
     message,

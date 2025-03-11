@@ -368,24 +368,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case "get_file_contents": {
         const args = files._GetFileContentsSchema.parse(params.arguments);
-        const contents = await files.getFileContents(
-          args.github_pat,
-          args.owner,
-          args.repo,
-          args.path,
-          args.branch
-        );
-        let response: typeof contents | string = ''
-        if (!Array.isArray(contents)) {
-          if (contents.content != null) {
-            response = contents
-          } else {
-            response = contents
-          }
-        }
-
+        const contents = await files.getFileContents(args);
+        
         return {
-          content: [{ type: "text", text: JSON.stringify(response, null, 2) }],
+          content: [{ type: "text", text: JSON.stringify(contents, null, 2) }],
         };
       }
 
