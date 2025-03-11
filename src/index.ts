@@ -375,8 +375,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           args.path,
           args.branch
         );
+        let response: typeof contents | string = ''
+        if (!Array.isArray(contents)) {
+          if (contents.content != null) {
+            response = contents
+          } else {
+            response = contents
+          }
+        }
+
         return {
-          content: [{ type: "text", text: JSON.stringify(contents, null, 2) }],
+          content: [{ type: "text", text: JSON.stringify(response, null, 2) }],
         };
       }
 
