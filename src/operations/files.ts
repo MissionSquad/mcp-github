@@ -98,6 +98,7 @@ export async function getFileContents(
   // If it's a file, decode the content?
   if (!Array.isArray(data) && data.content && !encoded) {
     data.content = Buffer.from(data.content, "base64").toString("utf8");
+    data.encoding = "utf8";
   }
 
   return data;
