@@ -372,7 +372,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         let text = '';
         if (Array.isArray(contents)) {
           // this means it's a directory
-          text = `Directory Contents:\n${contents.map(c => `- ${c.path} (${c.type}, ${c.size} bytes)`).join('\n')}`
+          text = `Directory Contents:\n${contents.map(c => `- ${c.path} (${c.type}, ${c.type === 'file' ? c.size.toString() + ' bytes' : ''})`).join('\n')}`
         } else {
           // this means it's a singular file
           text = 
@@ -384,9 +384,8 @@ File URL: ${contents.url}
 File HTML URL: ${contents.html_url}
 File Download URL: ${contents.download_url}
 File Type: ${contents.type}
-File Content: ${contents.content}
 File Encoding: ${contents.encoding}
-`
+File Content:\n\`\`\`${contents.content}\n\`\`\``
         }
         return {
           content: [{ type: "text", text }],
