@@ -83,7 +83,7 @@ export type GitHubCreateUpdateFileResponse = z.infer<typeof GitHubCreateUpdateFi
 
 // Function implementations
 export async function getFileContents(
-  { github_pat, owner, repo, path, encoded = true, branch }: z.infer<
+  { github_pat, owner, repo, path, encoded = false, branch }: z.infer<
     typeof _GetFileContentsSchema
   >,
 ) {
