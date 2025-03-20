@@ -321,6 +321,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     if (!params.arguments.github_pat) {
       if (process.env.GITHUB_PAT != null && process.env.GITHUB_PAT.trim() !== "") {
         params.arguments.github_pat = process.env.GITHUB_PAT;
+      } else if (process.env.GITHUB_PERSONAL_ACCESS_TOKEN != null && process.env.GITHUB_PERSONAL_ACCESS_TOKEN.trim() !== "") {
+        params.arguments.github_pat = process.env.GITHUB_PERSONAL_ACCESS_TOKEN;
       } else {
         throw new Error("GitHub PAT is required");
       }
