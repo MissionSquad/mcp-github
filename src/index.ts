@@ -319,7 +319,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       throw new Error("Arguments are required");
     }
     if (!params.arguments.github_pat) {
-      throw new Error("GitHub PAT is required");
+      if (process.env.GITHUB_PAT != null && process.env.GITHUB_PAT.trim() !== "") {
+        params.arguments.github_pat = process.env.GITHUB_PAT;
+      } else {
+        throw new Error("GitHub PAT is required");
+      }
     }
     switch (params.name) {
       case "fork_repository": {
