@@ -391,7 +391,9 @@ File HTML URL: ${contents.html_url}
 File Download URL: ${contents.download_url}
 File Type: ${contents.type}
 File Encoding: ${contents.encoding}
-File Content:\n\`\`\`${contents.content}\n\`\`\``
+File Content:
+\`\`\`${contents.content}
+\`\`\``
         }
         return {
           content: [{ type: "text", text }],
