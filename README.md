@@ -3,8 +3,8 @@
 MCP Server for the GitHub API, enabling file operations, repository management, search functionality, and more.
 
 ## Mission Squad modifications
-- github pat is now dynamic per request and does not have to be included via environment variables
-- name: msq-mcp-github
+- github pat is now dynamic per request and does not have to be included via environment variables, but still falls back to environment variables.
+- name: mcp-github
 
 ### Features
 
