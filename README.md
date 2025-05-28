@@ -1,5 +1,7 @@
 # GitHub MCP Server
 
+[![smithery badge](https://smithery.ai/badge/@MissionSquad/mcp-github)](https://smithery.ai/server/@MissionSquad/mcp-github)
+
 MCP Server for the GitHub API, enabling file operations, repository management, search functionality, and more.
 
 ## Mission Squad modifications
@@ -314,6 +316,14 @@ For detailed search syntax, see [GitHub's searching documentation](https://docs.
    - Create a token with the `repo` scope ("Full control of private repositories")
      - Alternatively, if working only with public repositories, select only the `public_repo` scope
    - Copy the generated token
+
+### Installing via Smithery
+
+To install GitHub API Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@MissionSquad/mcp-github):
+
+```bash
+npx -y @smithery/cli install @MissionSquad/mcp-github --client claude
+```
 
 ### Usage with Claude Desktop
 To use this with Claude Desktop, add the following to your `claude_desktop_config.json`:
