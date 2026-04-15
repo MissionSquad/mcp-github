@@ -8,6 +8,9 @@ type RequestOptions = {
   headers?: Record<string, string>;
 }
 
+export const GITHUB_WEBHOOK_ACCEPT_HEADER = "application/vnd.github+json";
+export const GITHUB_WEBHOOK_API_VERSION = "2026-03-10";
+
 async function parseResponseBody(response: Response): Promise<unknown> {
   const contentType = response.headers.get("content-type");
   if (contentType?.includes("application/json")) {
@@ -57,6 +60,21 @@ export async function githubRequest(
   }
 
   return responseBody;
+}
+
+export async function githubWebhookRequest(
+  github_pat: string,
+  url: string,
+  options: RequestOptions = {}
+): Promise<unknown> {
+  return githubRequest(github_pat, url, {
+    ...options,
+    headers: {
+      "Accept": GITHUB_WEBHOOK_ACCEPT_HEADER,
+      "X-GitHub-Api-Version": GITHUB_WEBHOOK_API_VERSION,
+      ...options.headers,
+    },
+  });
 }
 
 export function validateBranchName(branch: string): string {

@@ -240,6 +240,64 @@ export const GitHubPullRequestSchema = z.object({
   base: GitHubPullRequestRefSchema,
 });
 
+export const GitHubWebhookConfigSchema = z.object({
+  url: z.string(),
+  content_type: z.string().optional(),
+  insecure_ssl: z.union([z.string(), z.number()]).optional(),
+  secret: z.string().optional(),
+  username: z.string().optional(),
+  password: z.string().optional(),
+}).passthrough();
+
+export const GitHubWebhookLastResponseSchema = z.object({
+  code: z.number().nullable().optional(),
+  status: z.string().nullable().optional(),
+  message: z.string().nullable().optional(),
+}).passthrough();
+
+export const GitHubWebhookSchema = z.object({
+  type: z.string(),
+  id: z.number(),
+  name: z.string(),
+  active: z.boolean(),
+  events: z.array(z.string()),
+  config: GitHubWebhookConfigSchema,
+  updated_at: z.string(),
+  created_at: z.string(),
+  url: z.string(),
+  test_url: z.string().optional(),
+  ping_url: z.string().optional(),
+  deliveries_url: z.string().optional(),
+  last_response: GitHubWebhookLastResponseSchema.nullable().optional(),
+}).passthrough();
+
+export const GitHubWebhookDeliverySchema = z.object({
+  id: z.number(),
+  guid: z.string(),
+  delivered_at: z.string().nullable().optional(),
+  redelivery: z.boolean(),
+  duration: z.number().nullable().optional(),
+  status: z.string().nullable().optional(),
+  status_code: z.number().nullable().optional(),
+  event: z.string(),
+  action: z.string().nullable().optional(),
+  installation_id: z.number().nullable().optional(),
+  repository_id: z.number().nullable().optional(),
+  throttled_at: z.string().nullable().optional(),
+}).passthrough();
+
+export const GitHubWebhookDeliveryDetailSchema = GitHubWebhookDeliverySchema.extend({
+  url: z.string().optional(),
+  request: z.object({
+    headers: z.record(z.string(), z.any()).optional(),
+    payload: z.any().optional(),
+  }).passthrough().optional(),
+  response: z.object({
+    headers: z.record(z.string(), z.any()).optional(),
+    payload: z.any().optional(),
+  }).passthrough().optional(),
+}).passthrough();
+
 // Export types
 export type GitHubAuthor = z.infer<typeof GitHubAuthorSchema>;
 export type GitHubRepository = z.infer<typeof GitHubRepositorySchema>;
@@ -257,3 +315,8 @@ export type GitHubIssue = z.infer<typeof GitHubIssueSchema>;
 export type GitHubSearchResponse = z.infer<typeof GitHubSearchResponseSchema>;
 export type GitHubPullRequest = z.infer<typeof GitHubPullRequestSchema>;
 export type GitHubPullRequestRef = z.infer<typeof GitHubPullRequestRefSchema>;
+export type GitHubWebhookConfig = z.infer<typeof GitHubWebhookConfigSchema>;
+export type GitHubWebhookLastResponse = z.infer<typeof GitHubWebhookLastResponseSchema>;
+export type GitHubWebhook = z.infer<typeof GitHubWebhookSchema>;
+export type GitHubWebhookDelivery = z.infer<typeof GitHubWebhookDeliverySchema>;
+export type GitHubWebhookDeliveryDetail = z.infer<typeof GitHubWebhookDeliveryDetailSchema>;

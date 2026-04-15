@@ -281,6 +281,64 @@ MCP Server for the GitHub API, enabling file operations, repository management, 
      - `pull_number` (number): Pull request number
    - Returns: Array of pull request reviews with details like the review state (APPROVED, CHANGES_REQUESTED, etc.), reviewer, and review body
 
+## Webhook Tools
+
+This server now supports the full repository and organization webhook REST surface that is available with the existing `github_pat` auth model.
+
+### Repository webhook tools
+- `list_repository_webhooks`
+- `get_repository_webhook`
+- `create_repository_webhook`
+- `update_repository_webhook`
+- `delete_repository_webhook`
+- `get_repository_webhook_config`
+- `update_repository_webhook_config`
+- `ping_repository_webhook`
+- `list_repository_webhook_deliveries`
+- `get_repository_webhook_delivery`
+- `redeliver_repository_webhook_delivery`
+
+### Organization webhook tools
+- `list_organization_webhooks`
+- `get_organization_webhook`
+- `create_organization_webhook`
+- `update_organization_webhook`
+- `delete_organization_webhook`
+- `get_organization_webhook_config`
+- `update_organization_webhook_config`
+- `ping_organization_webhook`
+- `list_organization_webhook_deliveries`
+- `get_organization_webhook_delivery`
+- `redeliver_organization_webhook_delivery`
+
+### Permissions
+
+Repository webhooks:
+- Classic PATs typically need `admin:repo_hook` (or broader `repo`) to create, edit, delete, ping, or redeliver.
+- Fine-grained PATs need repository `Webhooks` permission with `read` for list/get and `write` for create/update/delete/ping/redelivery.
+
+Organization webhooks:
+- Classic PATs need `admin:org_hook`.
+- Fine-grained PATs need organization `Webhooks` permission with `read` for list/get and `write` for create/update/delete/ping/redelivery.
+
+### Usage notes
+- Create and update webhook tools hardcode `name: "web"` internally, which is what GitHub requires.
+- Repository webhook config supports `url`, `content_type`, `secret`, and `insecure_ssl`.
+- Organization webhook config supports those fields plus optional `username` and `password` for basic auth.
+- GitHub strongly recommends setting a webhook `secret` and validating delivery signatures on the receiving service.
+- `insecure_ssl: "1"` disables certificate verification and is discouraged.
+
+### Debugging flow
+- Use `ping_*_webhook` to trigger a test delivery after create or update.
+- Use `list_*_webhook_deliveries` to inspect recent attempts.
+- Use `get_*_webhook_delivery` to inspect the request payload, headers, and GitHub's captured response.
+- Use `redeliver_*_webhook_delivery` to replay a failed or stale delivery.
+
+### Out of scope
+- This server does not implement an inbound HTTP receiver for webhook deliveries.
+- This server does not perform delivery signature validation for your webhook endpoint.
+- GitHub App webhook endpoints are not included in this phase because those APIs require JWT-based app authentication rather than a PAT.
+
 ## Search Query Syntax
 
 ### Code Search

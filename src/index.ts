@@ -21,6 +21,7 @@ import * as rate_limit from './operations/rate_limit.js';
 import * as gists from './operations/gists.js';
 import * as projects from './operations/projects.js';
 import * as packages from './operations/packages.js';
+import * as webhooks from './operations/webhooks.js';
 import {
   GitHubError,
   GitHubValidationError,
@@ -301,6 +302,118 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: "get_repo_package",
         description: "Get a package for a repository",
         inputSchema: zodToJsonSchema(packages.GetRepoPackageSchema),
+      },
+      // Repository Webhooks
+      {
+        name: "list_repository_webhooks",
+        description: "List webhooks for a repository",
+        inputSchema: zodToJsonSchema(webhooks.ListRepositoryWebhooksSchema),
+      },
+      {
+        name: "get_repository_webhook",
+        description: "Get a specific webhook for a repository",
+        inputSchema: zodToJsonSchema(webhooks.GetRepositoryWebhookSchema),
+      },
+      {
+        name: "create_repository_webhook",
+        description: "Create a webhook for a repository",
+        inputSchema: zodToJsonSchema(webhooks.CreateRepositoryWebhookSchema),
+      },
+      {
+        name: "update_repository_webhook",
+        description: "Update a webhook for a repository",
+        inputSchema: zodToJsonSchema(webhooks.UpdateRepositoryWebhookSchema),
+      },
+      {
+        name: "delete_repository_webhook",
+        description: "Delete a webhook from a repository",
+        inputSchema: zodToJsonSchema(webhooks.DeleteRepositoryWebhookSchema),
+      },
+      {
+        name: "get_repository_webhook_config",
+        description: "Get webhook config for a repository webhook",
+        inputSchema: zodToJsonSchema(webhooks.GetRepositoryWebhookConfigSchema),
+      },
+      {
+        name: "update_repository_webhook_config",
+        description: "Update webhook config for a repository webhook",
+        inputSchema: zodToJsonSchema(webhooks.UpdateRepositoryWebhookConfigSchema),
+      },
+      {
+        name: "ping_repository_webhook",
+        description: "Ping a repository webhook",
+        inputSchema: zodToJsonSchema(webhooks.PingRepositoryWebhookSchema),
+      },
+      {
+        name: "list_repository_webhook_deliveries",
+        description: "List deliveries for a repository webhook",
+        inputSchema: zodToJsonSchema(webhooks.ListRepositoryWebhookDeliveriesSchema),
+      },
+      {
+        name: "get_repository_webhook_delivery",
+        description: "Get a delivery for a repository webhook",
+        inputSchema: zodToJsonSchema(webhooks.GetRepositoryWebhookDeliverySchema),
+      },
+      {
+        name: "redeliver_repository_webhook_delivery",
+        description: "Redeliver a repository webhook delivery",
+        inputSchema: zodToJsonSchema(webhooks.RedeliverRepositoryWebhookDeliverySchema),
+      },
+      // Organization Webhooks
+      {
+        name: "list_organization_webhooks",
+        description: "List webhooks for an organization",
+        inputSchema: zodToJsonSchema(webhooks.ListOrganizationWebhooksSchema),
+      },
+      {
+        name: "get_organization_webhook",
+        description: "Get a specific webhook for an organization",
+        inputSchema: zodToJsonSchema(webhooks.GetOrganizationWebhookSchema),
+      },
+      {
+        name: "create_organization_webhook",
+        description: "Create a webhook for an organization",
+        inputSchema: zodToJsonSchema(webhooks.CreateOrganizationWebhookSchema),
+      },
+      {
+        name: "update_organization_webhook",
+        description: "Update a webhook for an organization",
+        inputSchema: zodToJsonSchema(webhooks.UpdateOrganizationWebhookSchema),
+      },
+      {
+        name: "delete_organization_webhook",
+        description: "Delete a webhook from an organization",
+        inputSchema: zodToJsonSchema(webhooks.DeleteOrganizationWebhookSchema),
+      },
+      {
+        name: "get_organization_webhook_config",
+        description: "Get webhook config for an organization webhook",
+        inputSchema: zodToJsonSchema(webhooks.GetOrganizationWebhookConfigSchema),
+      },
+      {
+        name: "update_organization_webhook_config",
+        description: "Update webhook config for an organization webhook",
+        inputSchema: zodToJsonSchema(webhooks.UpdateOrganizationWebhookConfigSchema),
+      },
+      {
+        name: "ping_organization_webhook",
+        description: "Ping an organization webhook",
+        inputSchema: zodToJsonSchema(webhooks.PingOrganizationWebhookSchema),
+      },
+      {
+        name: "list_organization_webhook_deliveries",
+        description: "List deliveries for an organization webhook",
+        inputSchema: zodToJsonSchema(webhooks.ListOrganizationWebhookDeliveriesSchema),
+      },
+      {
+        name: "get_organization_webhook_delivery",
+        description: "Get a delivery for an organization webhook",
+        inputSchema: zodToJsonSchema(webhooks.GetOrganizationWebhookDeliverySchema),
+      },
+      {
+        name: "redeliver_organization_webhook_delivery",
+        description: "Redeliver an organization webhook delivery",
+        inputSchema: zodToJsonSchema(webhooks.RedeliverOrganizationWebhookDeliverySchema),
       },
       // Pull Request Diff
       {
@@ -779,6 +892,216 @@ ${contents.content}
         const result = await packages.getRepoPackage(github_pat, owner, repo, package_type, package_name);
         return {
           content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      // Repository Webhooks
+      case "list_repository_webhooks": {
+        const args = webhooks._ListRepositoryWebhooksSchema.parse(params.arguments);
+        const { github_pat, owner, repo, ...options } = args;
+        const result = await webhooks.listRepositoryWebhooks(github_pat, owner, repo, options);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "get_repository_webhook": {
+        const args = webhooks._GetRepositoryWebhookSchema.parse(params.arguments);
+        const result = await webhooks.getRepositoryWebhook(args.github_pat, args.owner, args.repo, args.hook_id);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "create_repository_webhook": {
+        const args = webhooks._CreateRepositoryWebhookSchema.parse(params.arguments);
+        const { github_pat, owner, repo, ...options } = args;
+        const result = await webhooks.createRepositoryWebhook(github_pat, owner, repo, options);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "update_repository_webhook": {
+        const args = webhooks._UpdateRepositoryWebhookSchema.parse(params.arguments);
+        const { github_pat, owner, repo, hook_id, ...options } = args;
+        const result = await webhooks.updateRepositoryWebhook(github_pat, owner, repo, hook_id, options);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "delete_repository_webhook": {
+        const args = webhooks._DeleteRepositoryWebhookSchema.parse(params.arguments);
+        const result = await webhooks.deleteRepositoryWebhook(args.github_pat, args.owner, args.repo, args.hook_id);
+        return {
+          content: [{ type: "text", text: typeof result === "string" ? result : JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "get_repository_webhook_config": {
+        const args = webhooks._GetRepositoryWebhookConfigSchema.parse(params.arguments);
+        const result = await webhooks.getRepositoryWebhookConfig(args.github_pat, args.owner, args.repo, args.hook_id);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "update_repository_webhook_config": {
+        const args = webhooks._UpdateRepositoryWebhookConfigSchema.parse(params.arguments);
+        const { github_pat, owner, repo, hook_id, ...options } = args;
+        const result = await webhooks.updateRepositoryWebhookConfig(github_pat, owner, repo, hook_id, options);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "ping_repository_webhook": {
+        const args = webhooks._PingRepositoryWebhookSchema.parse(params.arguments);
+        const result = await webhooks.pingRepositoryWebhook(args.github_pat, args.owner, args.repo, args.hook_id);
+        return {
+          content: [{ type: "text", text: typeof result === "string" ? result : JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "list_repository_webhook_deliveries": {
+        const args = webhooks._ListRepositoryWebhookDeliveriesSchema.parse(params.arguments);
+        const { github_pat, owner, repo, hook_id, ...options } = args;
+        const result = await webhooks.listRepositoryWebhookDeliveries(github_pat, owner, repo, hook_id, options);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "get_repository_webhook_delivery": {
+        const args = webhooks._GetRepositoryWebhookDeliverySchema.parse(params.arguments);
+        const result = await webhooks.getRepositoryWebhookDelivery(
+          args.github_pat,
+          args.owner,
+          args.repo,
+          args.hook_id,
+          args.delivery_id
+        );
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "redeliver_repository_webhook_delivery": {
+        const args = webhooks._RedeliverRepositoryWebhookDeliverySchema.parse(params.arguments);
+        const result = await webhooks.redeliverRepositoryWebhookDelivery(
+          args.github_pat,
+          args.owner,
+          args.repo,
+          args.hook_id,
+          args.delivery_id
+        );
+        return {
+          content: [{ type: "text", text: typeof result === "string" ? result : JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      // Organization Webhooks
+      case "list_organization_webhooks": {
+        const args = webhooks._ListOrganizationWebhooksSchema.parse(params.arguments);
+        const { github_pat, org, ...options } = args;
+        const result = await webhooks.listOrganizationWebhooks(github_pat, org, options);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "get_organization_webhook": {
+        const args = webhooks._GetOrganizationWebhookSchema.parse(params.arguments);
+        const result = await webhooks.getOrganizationWebhook(args.github_pat, args.org, args.hook_id);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "create_organization_webhook": {
+        const args = webhooks._CreateOrganizationWebhookSchema.parse(params.arguments);
+        const { github_pat, org, ...options } = args;
+        const result = await webhooks.createOrganizationWebhook(github_pat, org, options);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "update_organization_webhook": {
+        const args = webhooks._UpdateOrganizationWebhookSchema.parse(params.arguments);
+        const { github_pat, org, hook_id, ...options } = args;
+        const result = await webhooks.updateOrganizationWebhook(github_pat, org, hook_id, options);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "delete_organization_webhook": {
+        const args = webhooks._DeleteOrganizationWebhookSchema.parse(params.arguments);
+        const result = await webhooks.deleteOrganizationWebhook(args.github_pat, args.org, args.hook_id);
+        return {
+          content: [{ type: "text", text: typeof result === "string" ? result : JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "get_organization_webhook_config": {
+        const args = webhooks._GetOrganizationWebhookConfigSchema.parse(params.arguments);
+        const result = await webhooks.getOrganizationWebhookConfig(args.github_pat, args.org, args.hook_id);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "update_organization_webhook_config": {
+        const args = webhooks._UpdateOrganizationWebhookConfigSchema.parse(params.arguments);
+        const { github_pat, org, hook_id, ...options } = args;
+        const result = await webhooks.updateOrganizationWebhookConfig(github_pat, org, hook_id, options);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "ping_organization_webhook": {
+        const args = webhooks._PingOrganizationWebhookSchema.parse(params.arguments);
+        const result = await webhooks.pingOrganizationWebhook(args.github_pat, args.org, args.hook_id);
+        return {
+          content: [{ type: "text", text: typeof result === "string" ? result : JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "list_organization_webhook_deliveries": {
+        const args = webhooks._ListOrganizationWebhookDeliveriesSchema.parse(params.arguments);
+        const { github_pat, org, hook_id, ...options } = args;
+        const result = await webhooks.listOrganizationWebhookDeliveries(github_pat, org, hook_id, options);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "get_organization_webhook_delivery": {
+        const args = webhooks._GetOrganizationWebhookDeliverySchema.parse(params.arguments);
+        const result = await webhooks.getOrganizationWebhookDelivery(
+          args.github_pat,
+          args.org,
+          args.hook_id,
+          args.delivery_id
+        );
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "redeliver_organization_webhook_delivery": {
+        const args = webhooks._RedeliverOrganizationWebhookDeliverySchema.parse(params.arguments);
+        const result = await webhooks.redeliverOrganizationWebhookDelivery(
+          args.github_pat,
+          args.org,
+          args.hook_id,
+          args.delivery_id
+        );
+        return {
+          content: [{ type: "text", text: typeof result === "string" ? result : JSON.stringify(result, null, 2) }],
         };
       }
 
