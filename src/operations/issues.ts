@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { githubRequest, buildUrl } from "../common/utils.js";
+import {
+  githubRequest,
+  buildUrl,
+  GITHUB_WEBHOOK_ACCEPT_HEADER,
+  GITHUB_WEBHOOK_API_VERSION,
+} from "../common/utils.js";
 
 export const GetIssueSchema = z.object({
   owner: z.string(),
@@ -72,6 +77,19 @@ export const _UpdateIssueOptionsSchema = UpdateIssueOptionsSchema.extend({
   github_pat: z.string().describe("GitHub Personal Access Token"),
 });
 
+export const ListIssueCommentsSchema = z.object({
+  owner: z.string().describe("Repository owner (username or organization)"),
+  repo: z.string().describe("Repository name"),
+  issue_number: z.number().describe("Issue or pull request number (PRs are also issues in the GitHub API)"),
+  since: z.string().optional().describe("Only show comments updated at or after this time (ISO 8601, e.g., 2024-01-01T00:00:00Z)"),
+  per_page: z.number().int().min(1).max(100).optional().describe("Results per page (max 100)"),
+  page: z.number().int().min(1).optional().describe("Page number of the results"),
+});
+
+export const _ListIssueCommentsSchema = ListIssueCommentsSchema.extend({
+  github_pat: z.string().describe("GitHub Personal Access Token"),
+});
+
 export async function getIssue(github_pat: string, owner: string, repo: string, issue_number: number) {
   return githubRequest(github_pat, `https://api.github.com/repos/${owner}/${repo}/issues/${issue_number}`);
 }
@@ -140,6 +158,31 @@ export async function updateIssue(
     {
       method: "PATCH",
       body: options,
+    }
+  );
+}
+
+export async function listIssueComments(
+  github_pat: string,
+  owner: string,
+  repo: string,
+  issue_number: number,
+  options: Omit<z.infer<typeof ListIssueCommentsSchema>, "owner" | "repo" | "issue_number">
+) {
+  const urlParams: Record<string, string | undefined> = {
+    since: options.since,
+    per_page: options.per_page?.toString(),
+    page: options.page?.toString(),
+  };
+
+  return githubRequest(
+    github_pat,
+    buildUrl(`https://api.github.com/repos/${owner}/${repo}/issues/${issue_number}/comments`, urlParams),
+    {
+      headers: {
+        "Accept": GITHUB_WEBHOOK_ACCEPT_HEADER,
+        "X-GitHub-Api-Version": GITHUB_WEBHOOK_API_VERSION,
+      },
     }
   );
 }

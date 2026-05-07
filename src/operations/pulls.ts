@@ -1,10 +1,20 @@
 import { z } from "zod";
-import { githubRequest } from "../common/utils.js";
+import {
+  githubRequest,
+  buildUrl,
+  GITHUB_WEBHOOK_ACCEPT_HEADER,
+  GITHUB_WEBHOOK_API_VERSION,
+} from "../common/utils.js";
 import {
   GitHubPullRequestSchema,
   GitHubIssueAssigneeSchema,
   GitHubRepositorySchema,
 } from "../common/types.js";
+
+const MODERN_API_HEADERS = {
+  "Accept": GITHUB_WEBHOOK_ACCEPT_HEADER,
+  "X-GitHub-Api-Version": GITHUB_WEBHOOK_API_VERSION,
+} as const;
 
 // Schema definitions
 export const PullRequestFileSchema = z.object({
@@ -97,6 +107,10 @@ export const GetPullRequestSchema = z.object({
   pull_number: z.number().describe("Pull request number")
 });
 
+export const _GetPullRequestSchema = GetPullRequestSchema.extend({
+  github_pat: z.string().describe("GitHub Personal Access Token"),
+});
+
 export const ListPullRequestsSchema = z.object({
   owner: z.string().describe("Repository owner (username or organization)"),
   repo: z.string().describe("Repository name"),
@@ -105,8 +119,12 @@ export const ListPullRequestsSchema = z.object({
   base: z.string().optional().describe("Filter by base branch name"),
   sort: z.enum(['created', 'updated', 'popularity', 'long-running']).optional().describe("What to sort results by"),
   direction: z.enum(['asc', 'desc']).optional().describe("The direction of the sort"),
-  per_page: z.number().optional().describe("Results per page (max 100)"),
-  page: z.number().optional().describe("Page number of the results")
+  per_page: z.number().int().min(1).max(100).optional().describe("Results per page (max 100)"),
+  page: z.number().int().min(1).optional().describe("Page number of the results")
+});
+
+export const _ListPullRequestsSchema = ListPullRequestsSchema.extend({
+  github_pat: z.string().describe("GitHub Personal Access Token"),
 });
 
 export const CreatePullRequestReviewSchema = z.object({
@@ -164,7 +182,13 @@ export const MergePullRequestSchema = z.object({
 export const GetPullRequestFilesSchema = z.object({
   owner: z.string().describe("Repository owner (username or organization)"),
   repo: z.string().describe("Repository name"),
-  pull_number: z.number().describe("Pull request number")
+  pull_number: z.number().describe("Pull request number"),
+  per_page: z.number().int().min(1).max(100).optional().describe("Results per page (max 100)"),
+  page: z.number().int().min(1).optional().describe("Page number of the results")
+});
+
+export const _GetPullRequestFilesSchema = GetPullRequestFilesSchema.extend({
+  github_pat: z.string().describe("GitHub Personal Access Token"),
 });
 
 export const GetPullRequestStatusSchema = z.object({
@@ -183,13 +207,41 @@ export const UpdatePullRequestBranchSchema = z.object({
 export const GetPullRequestCommentsSchema = z.object({
   owner: z.string().describe("Repository owner (username or organization)"),
   repo: z.string().describe("Repository name"),
-  pull_number: z.number().describe("Pull request number")
+  pull_number: z.number().describe("Pull request number"),
+  sort: z.enum(['created', 'updated']).optional().describe("Sort comments by created or updated time"),
+  direction: z.enum(['asc', 'desc']).optional().describe("Sort direction. Defaults to asc when sort=created, desc otherwise"),
+  since: z.string().optional().describe("Only show comments updated at or after this time (ISO 8601, e.g., 2024-01-01T00:00:00Z)"),
+  per_page: z.number().int().min(1).max(100).optional().describe("Results per page (max 100)"),
+  page: z.number().int().min(1).optional().describe("Page number of the results")
+});
+
+export const _GetPullRequestCommentsSchema = GetPullRequestCommentsSchema.extend({
+  github_pat: z.string().describe("GitHub Personal Access Token"),
 });
 
 export const GetPullRequestReviewsSchema = z.object({
   owner: z.string().describe("Repository owner (username or organization)"),
   repo: z.string().describe("Repository name"),
-  pull_number: z.number().describe("Pull request number")
+  pull_number: z.number().describe("Pull request number"),
+  per_page: z.number().int().min(1).max(100).optional().describe("Results per page (max 100)"),
+  page: z.number().int().min(1).optional().describe("Page number of the results")
+});
+
+export const _GetPullRequestReviewsSchema = GetPullRequestReviewsSchema.extend({
+  github_pat: z.string().describe("GitHub Personal Access Token"),
+});
+
+export const GetPullRequestReviewCommentsSchema = z.object({
+  owner: z.string().describe("Repository owner (username or organization)"),
+  repo: z.string().describe("Repository name"),
+  pull_number: z.number().describe("Pull request number"),
+  review_id: z.number().describe("The unique identifier of the pull request review"),
+  per_page: z.number().int().min(1).max(100).optional().describe("Results per page (max 100)"),
+  page: z.number().int().min(1).optional().describe("Page number of the results")
+});
+
+export const _GetPullRequestReviewCommentsSchema = GetPullRequestReviewCommentsSchema.extend({
+  github_pat: z.string().describe("GitHub Personal Access Token"),
 });
 
 export const GetPullRequestDiffSchema = z.object({
@@ -337,12 +389,17 @@ export async function getPullRequestFiles(
   github_pat: string,
   owner: string,
   repo: string,
-  pullNumber: number
+  pullNumber: number,
+  options: Omit<z.infer<typeof GetPullRequestFilesSchema>, 'owner' | 'repo' | 'pull_number'> = {}
 ): Promise<z.infer<typeof PullRequestFileSchema>[]> {
-  const response = await githubRequest(
-    github_pat,
-    `https://api.github.com/repos/${owner}/${repo}/pulls/${pullNumber}/files`
+  const url = buildUrl(
+    `https://api.github.com/repos/${owner}/${repo}/pulls/${pullNumber}/files`,
+    {
+      per_page: options.per_page?.toString(),
+      page: options.page?.toString(),
+    }
   );
+  const response = await githubRequest(github_pat, url);
   return z.array(PullRequestFileSchema).parse(response);
 }
 
@@ -367,26 +424,55 @@ export async function getPullRequestComments(
   github_pat: string,
   owner: string,
   repo: string,
-  pullNumber: number
-): Promise<z.infer<typeof PullRequestCommentSchema>[]> {
-  const response = await githubRequest(
-    github_pat,
-    `https://api.github.com/repos/${owner}/${repo}/pulls/${pullNumber}/comments`
+  pullNumber: number,
+  options: Omit<z.infer<typeof GetPullRequestCommentsSchema>, 'owner' | 'repo' | 'pull_number'> = {}
+): Promise<unknown> {
+  const url = buildUrl(
+    `https://api.github.com/repos/${owner}/${repo}/pulls/${pullNumber}/comments`,
+    {
+      sort: options.sort,
+      direction: options.direction,
+      since: options.since,
+      per_page: options.per_page?.toString(),
+      page: options.page?.toString(),
+    }
   );
-  return z.array(PullRequestCommentSchema).parse(response);
+  return githubRequest(github_pat, url, { headers: { ...MODERN_API_HEADERS } });
 }
 
 export async function getPullRequestReviews(
   github_pat: string,
   owner: string,
   repo: string,
-  pullNumber: number
-): Promise<z.infer<typeof PullRequestReviewSchema>[]> {
-  const response = await githubRequest(
-    github_pat,
-    `https://api.github.com/repos/${owner}/${repo}/pulls/${pullNumber}/reviews`
+  pullNumber: number,
+  options: Omit<z.infer<typeof GetPullRequestReviewsSchema>, 'owner' | 'repo' | 'pull_number'> = {}
+): Promise<unknown> {
+  const url = buildUrl(
+    `https://api.github.com/repos/${owner}/${repo}/pulls/${pullNumber}/reviews`,
+    {
+      per_page: options.per_page?.toString(),
+      page: options.page?.toString(),
+    }
   );
-  return z.array(PullRequestReviewSchema).parse(response);
+  return githubRequest(github_pat, url, { headers: { ...MODERN_API_HEADERS } });
+}
+
+export async function getPullRequestReviewComments(
+  github_pat: string,
+  owner: string,
+  repo: string,
+  pullNumber: number,
+  reviewId: number,
+  options: Omit<z.infer<typeof GetPullRequestReviewCommentsSchema>, 'owner' | 'repo' | 'pull_number' | 'review_id'> = {}
+): Promise<unknown> {
+  const url = buildUrl(
+    `https://api.github.com/repos/${owner}/${repo}/pulls/${pullNumber}/reviews/${reviewId}/comments`,
+    {
+      per_page: options.per_page?.toString(),
+      page: options.page?.toString(),
+    }
+  );
+  return githubRequest(github_pat, url, { headers: { ...MODERN_API_HEADERS } });
 }
 
 export async function getPullRequestStatus(

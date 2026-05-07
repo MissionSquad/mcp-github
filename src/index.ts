@@ -421,6 +421,43 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         description: "Get the diff for a pull request",
         inputSchema: zodToJsonSchema(pulls.GetPullRequestDiffSchema),
       },
+      // Pull Request Reads
+      {
+        name: "get_pull_request",
+        description: "Get a single pull request by number",
+        inputSchema: zodToJsonSchema(pulls.GetPullRequestSchema),
+      },
+      {
+        name: "list_pull_requests",
+        description: "List pull requests in a repository with filtering options",
+        inputSchema: zodToJsonSchema(pulls.ListPullRequestsSchema),
+      },
+      {
+        name: "get_pull_request_files",
+        description: "List files changed in a pull request",
+        inputSchema: zodToJsonSchema(pulls.GetPullRequestFilesSchema),
+      },
+      // Pull Request and Issue Comments
+      {
+        name: "get_pull_request_comments",
+        description: "List pull request review comments (inline comments on the diff). For general PR conversation comments, use list_issue_comments with the PR number.",
+        inputSchema: zodToJsonSchema(pulls.GetPullRequestCommentsSchema),
+      },
+      {
+        name: "get_pull_request_reviews",
+        description: "List reviews on a pull request (each review may contain multiple inline comments — use get_pull_request_review_comments to fetch them).",
+        inputSchema: zodToJsonSchema(pulls.GetPullRequestReviewsSchema),
+      },
+      {
+        name: "get_pull_request_review_comments",
+        description: "List comments attached to a specific pull request review",
+        inputSchema: zodToJsonSchema(pulls.GetPullRequestReviewCommentsSchema),
+      },
+      {
+        name: "list_issue_comments",
+        description: "List comments on an issue or pull request conversation (general comments, not inline diff review comments). Pass a PR number as issue_number to fetch conversation-tab comments on a PR.",
+        inputSchema: zodToJsonSchema(issues.ListIssueCommentsSchema),
+      },
     ],
   };
 });
@@ -1112,6 +1149,72 @@ ${contents.content}
         const result = await pulls.getPullRequestDiff(github_pat, owner, repo, pull_number);
         return {
           content: [{ type: "text", text: result }],
+        };
+      }
+
+      // Pull Request Reads
+      case "get_pull_request": {
+        const args = pulls._GetPullRequestSchema.parse(params.arguments);
+        const result = await pulls.getPullRequest(args.github_pat, args.owner, args.repo, args.pull_number);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "list_pull_requests": {
+        const args = pulls._ListPullRequestsSchema.parse(params.arguments);
+        const { github_pat, owner, repo, ...options } = args;
+        const result = await pulls.listPullRequests(github_pat, owner, repo, options);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "get_pull_request_files": {
+        const args = pulls._GetPullRequestFilesSchema.parse(params.arguments);
+        const { github_pat, owner, repo, pull_number, ...options } = args;
+        const result = await pulls.getPullRequestFiles(github_pat, owner, repo, pull_number, options);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      // Pull Request and Issue Comments
+      case "get_pull_request_comments": {
+        const args = pulls._GetPullRequestCommentsSchema.parse(params.arguments);
+        const { github_pat, owner, repo, pull_number, ...options } = args;
+        const result = await pulls.getPullRequestComments(github_pat, owner, repo, pull_number, options);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "get_pull_request_reviews": {
+        const args = pulls._GetPullRequestReviewsSchema.parse(params.arguments);
+        const { github_pat, owner, repo, pull_number, ...options } = args;
+        const result = await pulls.getPullRequestReviews(github_pat, owner, repo, pull_number, options);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "get_pull_request_review_comments": {
+        const args = pulls._GetPullRequestReviewCommentsSchema.parse(params.arguments);
+        const { github_pat, owner, repo, pull_number, review_id, ...options } = args;
+        const result = await pulls.getPullRequestReviewComments(
+          github_pat, owner, repo, pull_number, review_id, options
+        );
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        };
+      }
+
+      case "list_issue_comments": {
+        const args = issues._ListIssueCommentsSchema.parse(params.arguments);
+        const { github_pat, owner, repo, issue_number, ...options } = args;
+        const result = await issues.listIssueComments(github_pat, owner, repo, issue_number, options);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
         };
       }
 
